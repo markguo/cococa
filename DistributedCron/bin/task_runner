@@ -1,0 +1,156 @@
+#!/bin/env python
+# -*- coding: gbk -*-
+
+import sys
+import subprocess
+import optparse
+import time
+
+import smtplib
+from email.MIMEText import MIMEText
+
+class MyLogRotate:
+    def __init__(self, filename, rotate_type):
+	self.filename = filename
+	self.rotate_type = rotate_type
+	self._log_fobj = None
+	self._current_logsuffix = None
+	self._prepare_log()
+
+    def _prepare_log(self):
+	timefmt = ''
+	if self.rotate_type == 'HOURLY':
+	    timefmt = '%Y%m%d-%H'
+	elif self.rotate_type == 'DAILY':
+	    timefmt = '%Y%m%d'
+	else:
+	    raise ValueError('Unknow rotate_type: %s' % self.rotate_type)
+
+	logsuffix = time.strftime(timefmt, time.localtime())
+	if not self._current_logsuffix  or self._current_logsuffix != logsuffix:
+	    if self._log_fobj:
+		self._log_fobj.close()
+	    self._current_logsuffix = logsuffix
+	    log_file = '%s.%s' % (self.filename, logsuffix)
+	    self._log_fobj = open(log_file, 'a')
+
+	# TODO: Cleanup old logs 
+    def log(self, msg, with_CRLF = False):
+	self._prepare_log()
+	if with_CRLF:
+	    print >> self._log_fobj, msg
+	else:
+	    print >> self._log_fobj, msg,
+
+SMTP_SERVER_OP_PORTAL =  'op-portal'
+mail_sender = 'guoshiwei@sogou-inc.com'
+def send_mail(to_list, sub, content):
+    ''' 
+    to_list:发给谁
+    sub:主题
+    content:内容
+    send_mail("aaa@126.com","sub","content")
+    '''
+    me = 'TaskRunner<%s>' % mail_sender
+    msg = MIMEText(content)
+    msg['Subject'] = sub 
+    msg['From'] = me
+    msg['To'] = ";".join(to_list)
+    try:
+        s = smtplib.SMTP()
+        s.connect(SMTP_SERVER_OP_PORTAL)
+        s.sendmail(me, to_list, msg.as_string())
+        s.close()
+        return True
+    except Exception, e:
+        print str(e)
+        return False
+
+def split_args():
+    nonoption_args_start_index = len(sys.argv)
+    my_args = []
+    command_args = []
+
+    is_my_args = True
+    for i, arg in enumerate(sys.argv[1:]):
+	if is_my_args:
+	    if arg == '-':
+		is_my_args = False
+	    else:
+		my_args.append(arg)
+	else:
+	    command_args.append(arg)
+
+    return my_args, command_args
+
+mail_reciver = ('guoshiwei@sogou-inc.com',) 
+
+def is_stdin_tty():
+    return subprocess.call(['/usr/bin/tty', '-s']) == 0
+
+def ReportSuccessExec(cmd):
+    sub = 'EXEC_SUCCEED "%s"' % cmd
+
+    print >> sys.stderr, sub
+    send_mail(mail_reciver, sub , '')
+    if logger:
+	logger.log("SENDMAIL %s to %s SUCCEED" % (sub, mail_reciver), True)
+
+def ReportFailExec(cmd, returncode, info):
+    sub = 'EXEC_FAILED returncode=%d "%s"' % (returncode, cmd)
+    print >> sys.stderr, sub
+    print >> sys.stderr, info
+
+    content = info
+    send_mail(mail_reciver, sub , info)
+    if logger:
+	logger.log("SENDMAIL %s to %s SUCCEED" % (sub, mail_reciver), True)
+
+logger = None
+
+def main():
+    my_args, command_args = split_args()
+
+    parser = optparse.OptionParser()
+    parser.add_option('-l', '--log-file', action = 'store')
+    parser.add_option('-r', '--log-rotate-type', action = 'store', default = 'DAILY')
+    opts, args = parser.parse_args(my_args)
+    assert len(args) == 0
+
+    sub_commands = ' '.join(command_args)
+    if not sub_commands:
+	parser.error("No task to run")
+
+    try:
+	if not opts.log_file:
+	    raise optparse.OptParseError('LOG_FILE must given')
+
+	if not opts.log_rotate_type or opts.log_rotate_type not in ('DAILY', 'HOURLY'):
+	    raise optparse.OptParseError('BAD LOG_ROTATE_TYPE: %s' %
+		    opts.log_rotate_type)
+
+	global logger
+	logger = MyLogRotate(opts.log_file, opts.log_rotate_type)
+	print >> sys.stderr, 'EXECUTE "%s"' % sub_commands
+	pipe = subprocess.Popen(['/bin/bash', '-c', sub_commands], stdout = subprocess.PIPE, stderr = subprocess.STDOUT)
+	for l in pipe.stdout:
+	    logger.log(l)
+
+	pipe.wait()
+
+	if pipe.returncode == 0:
+	    ReportSuccessExec(sub_commands)
+	else:
+	    ReportFailExec(sub_commands, pipe.returncode, '')
+
+    except optparse.OptParseError, e:
+	if not is_stdin_tty():
+	    ReportFailExec(sub_commands, -1, str(e))
+
+	parser.error(str(e))
+    except Exception, e:
+	ReportFailExec(sub_commands, -1, str(e))
+	return 1
+
+if __name__ == '__main__':
+    sys.exit(main())
