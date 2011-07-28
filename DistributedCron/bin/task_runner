@@ -108,6 +108,63 @@ def ReportFailExec(cmd, returncode, info):
 
 logger = None
 
+class TaskConfig:
+    def __init__(self, config_file):
+	pass
+
+    def full_command(self):
+	return ' '.join(command_args)
+
+    def working_directory(self):
+	pass
+
+    def logfile_prefix(self):
+	pass
+
+    def log_rotate_type(self):
+	pass
+
+class Task:
+    def __init__(self, task_config):
+	self._conf = task_config
+
+    def spwan_and_run(self, command_args):
+	L.info("WORKING_DIR: %s" % self._conf.working_directory())
+	os.chdir(self._conf.working_directory())
+
+	sub_commands = self._conf.full_command()
+
+	try:
+
+	    global logger
+	    logger = MyLogRotate(self._conf.logfile_prefix(), self._conf.log_rotate_type())
+
+	    print >> sys.stderr, 'EXECUTE "%s"' % sub_commands
+	    pipe = subprocess.Popen(['/bin/bash', '-c', sub_commands], stdout = subprocess.PIPE, stderr = subprocess.STDOUT)
+	    for l in pipe.stdout:
+		logger.log(l)
+
+	    pipe.wait()
+
+	    if pipe.returncode == 0:
+		ReportSuccessExec(sub_commands)
+	    else:
+		ReportFailExec(sub_commands, pipe.returncode, '')
+
+	except optparse.OptParseError, e:
+	    if not is_stdin_tty():
+		ReportFailExec(sub_commands, -1, str(e))
+
+	    parser.error(str(e))
+	except Exception, e:
+	    ReportFailExec(sub_commands, -1, str(e))
+	    return 1
+    
+class TaskManager:
+    def __init__(self):
+	pass
+
+
 def main():
     my_args, command_args = split_args()
 
@@ -116,41 +173,6 @@ def main():
     parser.add_option('-r', '--log-rotate-type', action = 'store', default = 'DAILY')
     opts, args = parser.parse_args(my_args)
     assert len(args) == 0
-
-    sub_commands = ' '.join(command_args)
-    if not sub_commands:
-	parser.error("No task to run")
-
-    try:
-	if not opts.log_file:
-	    raise optparse.OptParseError('LOG_FILE must given')
-
-	if not opts.log_rotate_type or opts.log_rotate_type not in ('DAILY', 'HOURLY'):
-	    raise optparse.OptParseError('BAD LOG_ROTATE_TYPE: %s' %
-		    opts.log_rotate_type)
-
-	global logger
-	logger = MyLogRotate(opts.log_file, opts.log_rotate_type)
-	print >> sys.stderr, 'EXECUTE "%s"' % sub_commands
-	pipe = subprocess.Popen(['/bin/bash', '-c', sub_commands], stdout = subprocess.PIPE, stderr = subprocess.STDOUT)
-	for l in pipe.stdout:
-	    logger.log(l)
-
-	pipe.wait()
-
-	if pipe.returncode == 0:
-	    ReportSuccessExec(sub_commands)
-	else:
-	    ReportFailExec(sub_commands, pipe.returncode, '')
-
-    except optparse.OptParseError, e:
-	if not is_stdin_tty():
-	    ReportFailExec(sub_commands, -1, str(e))
-
-	parser.error(str(e))
-    except Exception, e:
-	ReportFailExec(sub_commands, -1, str(e))
-	return 1
 
 if __name__ == '__main__':
     sys.exit(main())
