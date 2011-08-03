@@ -1,13 +1,25 @@
-#!/bin/env python
+#!/bin/env python26
 # -*- coding: gbk -*-
 
 import sys
 import subprocess
 import optparse
 import time
+import glob
+import os
+import ConfigParser
+import re
+import socket
+import logging 
+import logging.handlers
 
-import smtplib
-from email.MIMEText import MIMEText
+from LocalAux import parse_run_time_flags, ReportFailExec, ReportSuccessExec
+from daemonize import daemonize
+
+THIS_HOST = socket.gethostname()
+THIS_IP = socket.gethostbyname(THIS_HOST)
+g_monitor_agent = None
+L = None
 
 class MyLogRotate:
     def __init__(self, filename, rotate_type):
@@ -35,6 +47,7 @@ class MyLogRotate:
 	    self._log_fobj = open(log_file, 'a')
 
 	# TODO: Cleanup old logs 
+
     def log(self, msg, with_CRLF = False):
 	self._prepare_log()
 	if with_CRLF:
@@ -42,137 +55,173 @@ class MyLogRotate:
 	else:
 	    print >> self._log_fobj, msg,
 
-SMTP_SERVER_OP_PORTAL =  'op-portal'
-mail_sender = 'guoshiwei@sogou-inc.com'
-def send_mail(to_list, sub, content):
-    ''' 
-    to_list:发给谁
-    sub:主题
-    content:内容
-    send_mail("aaa@126.com","sub","content")
-    '''
-    me = 'TaskRunner<%s>' % mail_sender
-    msg = MIMEText(content)
-    msg['Subject'] = sub 
-    msg['From'] = me
-    msg['To'] = ";".join(to_list)
-    try:
-        s = smtplib.SMTP()
-        s.connect(SMTP_SERVER_OP_PORTAL)
-        s.sendmail(me, to_list, msg.as_string())
-        s.close()
-        return True
-    except Exception, e:
-        print str(e)
-        return False
-
-def split_args():
-    nonoption_args_start_index = len(sys.argv)
-    my_args = []
-    command_args = []
-
-    is_my_args = True
-    for i, arg in enumerate(sys.argv[1:]):
-	if is_my_args:
-	    if arg == '-':
-		is_my_args = False
-	    else:
-		my_args.append(arg)
-	else:
-	    command_args.append(arg)
-
-    return my_args, command_args
-
-mail_reciver = ('guoshiwei@sogou-inc.com',) 
-
-def is_stdin_tty():
-    return subprocess.call(['/usr/bin/tty', '-s']) == 0
-
-def ReportSuccessExec(cmd):
-    sub = 'EXEC_SUCCEED "%s"' % cmd
-
-    print >> sys.stderr, sub
-    send_mail(mail_reciver, sub , '')
-    if logger:
-	logger.log("SENDMAIL %s to %s SUCCEED" % (sub, mail_reciver), True)
-
-def ReportFailExec(cmd, returncode, info):
-    sub = 'EXEC_FAILED returncode=%d "%s"' % (returncode, cmd)
-    print >> sys.stderr, sub
-    print >> sys.stderr, info
-
-    content = info
-    send_mail(mail_reciver, sub , info)
-    if logger:
-	logger.log("SENDMAIL %s to %s SUCCEED" % (sub, mail_reciver), True)
-
-logger = None
-
-class TaskConfig:
-    def __init__(self, config_file):
+class MonitorAgent:
+    def __init__(self):
 	pass
 
-    def full_command(self):
-	return ' '.join(command_args)
+    def ping(self, info):
+	'''Send info to our monitor system.'''
 
-    def working_directory(self):
-	pass
+	L.info('MONITOR %s %s %s' % (THIS_HOST, THIS_IP, str(info)))
 
-    def logfile_prefix(self):
-	pass
+class TaskExecutionResult:
+    def __init__(self, name, succeed, used_time, msg):
+	self.name = name
+	self.succeed = succeed
+	self.used_time = used_time
+	self.msg = msg
 
-    def log_rotate_type(self):
-	pass
+    def __str__(self):
+	return 'TASK_END %s succeed:%s, used_time:%d, msg:%s' % (self.name, 
+		self.succeed,
+		self.used_time, self.msg)
 
 class Task:
     def __init__(self, task_config):
-	self._conf = task_config
+	self._load_from_config(task_config)
 
-    def spwan_and_run(self, command_args):
-	L.info("WORKING_DIR: %s" % self._conf.working_directory())
-	os.chdir(self._conf.working_directory())
+    def _load_from_config(self, config_file):
+	conf = ConfigParser.ConfigParser()
+	conf.read(config_file)
+	self._name = os.path.basename(config_file).split('.')[0]
+	self._cmd = conf.get('DCRON', 'CMD')
+	self._working_directory = conf.get('DCRON', 'WORKING_DIRECTORY')
+	self._run_time_flags = conf.get('DCRON', 'RUN_TIME_FLAGS')
+	self._log_prefix = conf.get('DCRON', 'LOG_PREFIX')
+	self._log_rotate_type = conf.get('DCRON', 'LOG_ROTATE_TYPE')
 
-	sub_commands = self._conf.full_command()
+	if self._log_rotate_type not in ('HOURLY', 'DAILY'):
+	    raise ConfigError('Invalid LOG_ROTATE_TYPE: %s. Should be HOURLY or DAILY' %
+		    self._log_rotate_type)
 
+	self._minute, self._hour = parse_run_time_flags(self._run_time_flags)
+
+    def name(self):
+	return self._name
+
+    def cmd(self):
+	return self._cmd
+
+    def should_run(self, st_now):
+	return st_now.tm_min in self._minute \
+		and st_now.tm_hour in self._hour
+
+    def _do_command(self, cmd):
 	try:
+	    logger = MyLogRotate(self._log_prefix, self._log_rotate_type)
 
-	    global logger
-	    logger = MyLogRotate(self._conf.logfile_prefix(), self._conf.log_rotate_type())
-
-	    print >> sys.stderr, 'EXECUTE "%s"' % sub_commands
-	    pipe = subprocess.Popen(['/bin/bash', '-c', sub_commands], stdout = subprocess.PIPE, stderr = subprocess.STDOUT)
+	    pipe = subprocess.Popen(['/bin/bash', '-c', cmd], stdout = subprocess.PIPE, stderr = subprocess.STDOUT)
 	    for l in pipe.stdout:
 		logger.log(l)
 
 	    pipe.wait()
 
-	    if pipe.returncode == 0:
-		ReportSuccessExec(sub_commands)
-	    else:
-		ReportFailExec(sub_commands, pipe.returncode, '')
+	    return pipe.returncode == 0, pipe.returncode, ''
 
-	except optparse.OptParseError, e:
-	    if not is_stdin_tty():
-		ReportFailExec(sub_commands, -1, str(e))
-
-	    parser.error(str(e))
 	except Exception, e:
-	    ReportFailExec(sub_commands, -1, str(e))
-	    return 1
-    
-class TaskManager:
-    def __init__(self):
-	pass
+	    return False, -1, str(e)
 
+    def run(self):
+	os.chdir(self._working_directory)
+
+	start_time = time.time()
+	exec_succeed, exit_code, msg = self._do_command(self._cmd)
+	cmd_run_time = time.time() - start_time
+
+	if not exec_succeed:
+	    # Mail notify ther owner
+	    ReportFailExec(self.name(), exit_code, msg)
+    
+	result = TaskExecutionResult(self.name(), exec_succeed, cmd_run_time, msg)
+	g_monitor_agent.ping(result)
+
+class TaskManager:
+    def __init__(self, dir):
+	self._task_config_dir = dir
+	self._task_list = []
+
+    def _load_tasks(self):
+	'''Load tasks from task config directory'''
+	self._task_list = []
+	for file in glob.glob('%s/*.dcron.cfg' % self._task_config_dir):
+	    try:
+		self._task_list.append(Task(file))
+	    except RuntimeError, e:
+		L.error(str(e))
+
+    def _do_task(self, task):
+	n = os.fork()
+	if n < 0:
+	    L.error('fork error: %s' % task.name()())
+	elif n == 0:
+	    # child
+	    sys.exit(task.run())
+	else:
+	    # parent
+	    # Return imediately, so we can fork other tasks.
+	    g_monitor_agent.ping('TASK_START %s(%s) pid:%d' % (task.name(), task.cmd(), n))
+	    return
+
+    def _run_jobs(self, run_task_list):
+	for task in run_task_list:
+	    self._do_task(task)
+	
+    def _clean_exited_task(self):
+	try:
+	    while True:
+		pid, exitstatus = os.waitpid(-1, os.WNOHANG)
+		if not pid:
+		    return
+
+	except OSError, e:
+	    pass
+
+    def run(self):
+	while True:
+	    self._clean_exited_task()
+	    self._load_tasks()
+
+	    st_now = time.localtime(time.time())
+	    run_task_list = [ task for task in self._task_list if
+		    task.should_run(st_now)]
+
+	    self._run_jobs(run_task_list)
+	    time.sleep(60)
 
 def main():
-    my_args, command_args = split_args()
-
     parser = optparse.OptionParser()
     parser.add_option('-l', '--log-file', action = 'store')
-    parser.add_option('-r', '--log-rotate-type', action = 'store', default = 'DAILY')
-    opts, args = parser.parse_args(my_args)
-    assert len(args) == 0
+    parser.add_option('-t', '--task-config-dir', action = 'store')
+    parser.add_option('-D', '--daemonize', action = 'store_true', default = False)
+
+    opts, args = parser.parse_args()
+    if not opts.log_file:
+	parser.error("Missing LOG_FILE")
+
+    if not opts.task_config_dir:
+	parser.error("Missing TASK_CONFIG_DIR")
+
+    global L
+    L = logging.getLogger()
+
+    fmt = logging.Formatter("[%(asctime)s] %(name)s %(levelname)s %(message)s", "%Y%m%d %H:%M:%S")
+    rotate_log_handler = logging.handlers.TimedRotatingFileHandler(opts.log_file, 'M', 1, 1)
+    rotate_log_handler.setFormatter(fmt) 
+    L.addHandler(rotate_log_handler)
+    L.setLevel(logging.DEBUG)
+
+    global g_monitor_agent
+    g_monitor_agent = MonitorAgent()
+
+    task_manager = TaskManager(opts.task_config_dir)
+
+    if opts.daemonize:
+	L.info("Forking into background, bye ...")
+	rotate_log_handler.flush()
+	daemonize()
+
+    task_manager.run()
+    logging.shutdown()
 
 if __name__ == '__main__':
     sys.exit(main())
