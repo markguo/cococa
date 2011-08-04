@@ -25,6 +25,9 @@ AC_CHECK_HEADERS([iostream])
 CPPFLAGS="$CPPFLAGS -D_FILE_OFFSET_BITS=64 -D SS_DOCID_BITS=128"
 
 AC_CONFIG_SUBDIRS([third-party/adns-1.2])
+
+AC_SUBST(ADNS_DIR, [third-party/adns-1.2])
+
 # finalize
 AC_CONFIG_FILES([
 	Makefile
