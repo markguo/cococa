@@ -1,4 +1,3 @@
-# Generated automatically from Makefile.in by configure.
 # Makefile[.in] - top-level Makefile
 #  
 #  This file is part of adns, which is
@@ -26,6 +25,7 @@
 DISTVERSION=	1.2
 
 srcdir=		.
+
 
 ENABLE_DYNAMIC=	elf
 ifeq ($(ENABLE_DYNAMIC),elf)
