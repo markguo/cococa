@@ -23,21 +23,6 @@
 AC_INIT(src/adns.h)
 AC_CONFIG_HEADER(src/config.h)
 
-dnl DPKG_CACHED_TRY_COMPILE(<description>,<cachevar>,<include>,<program>,<ifyes>,<ifno>)
-define(DPKG_CACHED_TRY_COMPILE,[
- AC_MSG_CHECKING($1)
- AC_CACHE_VAL($2,[
-  AC_TRY_COMPILE([$3],[$4],[$2=yes],[$2=no])
- ])
- if test "x$$2" = xyes; then
-  true
-  $5
- else
-  true
-  $6
- fi
-])
-
 AC_MSG_CHECKING(whether you requested dynamic linking)
 AC_SUBST(ENABLE_DYNAMIC)
 AC_ARG_ENABLE(dynamic,
