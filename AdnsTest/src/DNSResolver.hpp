@@ -5,6 +5,13 @@
  *    \author guoshiwei (guoshiwei@gmail.com)
  */
 
+#include <string>
+#include <boost/function.hpp>
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+
 #include <adns.h>
 
 /**
@@ -26,7 +33,6 @@
 struct DNSRequest
 {
     public:
-	unsigned int timeout_sec;
 	void *user_data;
 
     private:
@@ -40,11 +46,27 @@ struct DNSRequest
 	 *
 	 * \param domain The domain name to resolve, it is copyed, so you can free it any time.
 	 * \param user_data Anything you want me to hold.
-	 * \param timeout_sec Max seconds num before DNS server send reponse. It's reletive time.
 	 */
-	static DNSRequest * CreateRequest(const char *domain, unsigned int timeout_sec, void *user_data);
+	static DNSRequest * CreateRequest(const char *domain, void *user_data);
+	void * FreeRequest(DNSRequest *req);
 
     private:
+};
+
+struct DNSResult
+{
+    public:
+	std::string domain;
+	DNSResolver::ResolveError error;
+	struct addrinfo *ai;
+
+	void * user_data;
+	DNSResult():
+	    error(DNSResolver::RE_OK), ai(NULL), user_data(NULL),done_(false)
+    {}
+
+    private:
+	bool done_;
 };
 
 class DNSResolver
@@ -58,22 +80,26 @@ class DNSResolver
 	    __RE_NUM,
 	};
 
-	typedef boost::function<DNSRequest * (ResolveError, struct addrinfo)> DNSResultCallback_t;
+	typedef boost::function<DNSRequest * (DNSResult *)> DNSResultCallback_t;
 
 	static const char * strerror(ResolveError re);
 
     public:
+	DNSResolver();
+	~DNSResolver();
+
 	/**
 	 * \param max_concurrency Max number of concurrent DNS request we can send.
+	 * \param req_timeout_sec Max seconds num before DNS server send reponse. It's reletive time.
 	 */
-	bool init(size_t max_concurrency, DNSResultCallback_t cb);
+	bool init(size_t max_concurrency, unsigned int req_timeout_sec, DNSResultCallback_t cb);
 
 	/**
 	 * \brief Submit 'req' to reolver.
 	 *
 	 * \param req The pointer is hold by resolver, you CANNOT free it before resolve finished.
 	 */
-	bool submit(DNSRequest *req);
+	bool submit(std::string &domain, void *user_data);
 
 	size_t padding_req_num() const;
 
@@ -87,39 +113,6 @@ class DNSResolver
 
     private:
 	size_t padding_req_num_;
+	time_t req_timeout_;
 	DNSResultCallback_t cb_;
-};
-
-struct DNSResult
-{
-    DNSRequest *req;
-    struct addrinfo *ai;
-};
-
-/**
- * Start a thread to do resolve jobs.
- */
-class DNSResolverThread
-{
-    public:
-
-	bool init(size_t max_concurrency);
-
-	bool start();
-
-	void notify_stop();
-	
-	int join();
-
-	/**
-	 * Submit 'req' to input queue, never block.
-	 * If padding_req_num > max_concurrency, submit fail.
-	 */
-	bool submit(DNSRequest *req);
-
-	/**
-	 *
-	 * Get DNSResult, 'result' is set properly if 'get_result' return true.
-	 */
-	bool get_result(DNSResult &result, struct timeval *timeout);
 };
