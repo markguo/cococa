@@ -16,7 +16,7 @@
 
 adns_query one_query;
 
-static void failure_errno(const char *what, int errnoval) 
+static void __failure_errno(const char *what, int errnoval) 
 {
     switch (errnoval) {
 #define CE(e) \
@@ -30,8 +30,6 @@ static void failure_errno(const char *what, int errnoval)
 #undef CE
 	default: fprintf(stderr,"adns failure: %s: errno=%d\n",what,errnoval); break;
     }
-
-    exit(2);
 }
 
 static void dumptype(adns_status ri, const char *rrtype_name, const char *fmtname) {
@@ -42,36 +40,112 @@ static void dumptype(adns_status ri, const char *rrtype_name, const char *fmtnam
 	    ri ? adns_strerror(ri) : "");
 }
 
-static void failure_status(const char *what, adns_status st) {
-    fprintf(stderr,"adns failure: %s: %s\n",what,adns_strerror(st));
-    exit(2);
+static void __adns_logcallback(adns_state ads, void *logfndata,
+				const char *fmt, va_list al)
+{
+    vfprintf(stderr, fmt, al);
 }
 
-/**
- * Submit DNS query of A type
- */
-static bool __adns_submit_A(adns_state ads, const char * domain, adns_query &one_query)
+class Adns;
+struct AdnsQuery
 {
-    adns_status ri;
-    adns_rrtype rrtype = adns_r_a;
-    const char * rrtype_name = NULL;
-    const char * fmtname = NULL;
+    public:
 
-    int r = adns_submit(ads, domain, rrtype, adns_qf_none, NULL, &one_query);
-    if (r) {
-	failure_errno("submit",r);
+    private:
+	friend class Adns;
+	adns_query query_;
+	bool done_;
+};
+
+class Adns
+{
+    public:
+	Adns(){}
+	~Adns();
+
+	bool init();
+
+	/**
+	 * Submit A type DNS query.
+	 */
+	bool submit(const char *domain, AdnsQuery *p_query);
+
+	bool poll(AdnsQuery ** finished_query_r);
+
+    private:
+	bool handle_answer(const adns_answer *ans, AdnsQuery *p_query, const struct timeval &now);
+	bool submit_adns_query(const char *domain, AdnsQuery *p_query);
+
+    private:
+	adns_state ads_;
+};
+
+Adns::~Adns()
+{
+    if(ads_)
+	adns_finish(ads_);
+}
+
+bool Adns::init()
+{
+    adns_initflags adns_if = (adns_initflags)(adns_if_noautosys);
+    int r = adns_init_logfn(&ads_, adns_if, NULL,
+	    __adns_logcallback, NULL);
+
+    if(r){
+	__failure_errno("adns_init", r);
 	return false;
     }
 
-    ri = adns_rr_info(rrtype, &rrtype_name, &fmtname,0, 0,0);
-    fprintf(stdout, "%s", domain);
-    putc(' ',stdout);
-    dumptype(ri, rrtype_name, fmtname);
-    fprintf(stdout," submitted\n");
     return true;
 }
 
-static bool __adns_handle_answer(adns_state ads, const adns_answer *ans, const char *domain, const struct timeval &now)
+bool Adns::submit_adns_query(const char *domain, AdnsQuery *p_query)
+{
+    int r = adns_submit(ads_, domain, adns_r_a, adns_qf_owner, p_query, &p_query->query_);
+    if (r) {
+	__failure_errno("submit",r);
+	return false;
+    }
+
+    fprintf(stderr, "%s submitted\n", domain);
+    p_query->done_ = false;
+    return true;
+}
+
+bool Adns::submit(const char *domain, AdnsQuery *p_query)
+{
+    return submit_adns_query(domain, p_query);
+}
+
+bool Adns::poll(AdnsQuery ** finished_query_r)
+{
+    adns_answer *ans;
+    struct timeval now;
+    gettimeofday(&now,0);
+
+    adns_query finished_adns_query = NULL;
+
+    void * context = NULL;
+    int r = adns_wait(ads_, &finished_adns_query, &ans, &context);
+    if (r) __failure_errno("wait/check",r);
+
+    AdnsQuery *finished_query = (AdnsQuery *)context;
+    assert(finished_query->query_ == finished_adns_query);
+
+    handle_answer(ans, finished_query, now);
+
+    if(finished_query->done_){
+	if(finished_query_r)
+	    *finished_query_r = finished_query;
+
+	return false;
+    }
+
+    return true;
+}
+
+bool Adns::handle_answer(const adns_answer *ans, AdnsQuery *p_query, const struct timeval &now)
 {
     int len;
     adns_status ri;
@@ -79,7 +153,7 @@ static bool __adns_handle_answer(adns_state ads, const adns_answer *ans, const c
     const char * fmtname = NULL;
 
     ri = adns_rr_info(ans->type, &rrtype_name, &fmtname, &len, 0,0);
-    fprintf(stdout, "%s flags %d type ",domain, adns_qf_none);
+    fprintf(stdout, "%s flags %d type ", ans->owner, adns_qf_none);
 
     dumptype(ri, rrtype_name, fmtname);
     fprintf(stdout, " %s; nrrs=%d; cname=%s; owner=%s; ttl=%ld\n",
@@ -95,46 +169,45 @@ static bool __adns_handle_answer(adns_state ads, const adns_answer *ans, const c
 	char *show;
 	for (int i=0; i<ans->nrrs; i++) {
 	    ri = adns_rr_info(ans->type, 0,0,0, ans->rrs.bytes + i*len, &show);
-	    if (ri) failure_status("info",ri);
+	    if (ri){
+		fprintf(stderr,"adns failure: %s: %s\n", "adns_rr_info", adns_strerror(ri));
+		assert(false);
+	    }
+
 	    fprintf(stdout," %s\n",show);
 	    free(show);
 	}
     }
 
     if(ans->status == adns_s_prohibitedcname){
-	__adns_submit_A(ads, ans->cname, one_query);
-	return true;
+	return submit_adns_query(ans->cname, p_query);
     }
 
-
-    return false;
+    p_query->done_ = true;
+    return true;
 }
+
+/*-----------------------------------------------------------------------------
+ *  
+ *-----------------------------------------------------------------------------*/
 
 int main(int argc, char * argv[])
 {
-    adns_state ads;
-
-    adns_initflags adns_if = (adns_initflags)(adns_if_debug|adns_if_noautosys);
-    int r = adns_init(&ads, adns_if, NULL);
-
-    if(r)
-	failure_errno("adns_init", r);
-
     const char * domain = "www.sohu.com";
 
-    if(!__adns_submit_A(ads, domain, one_query))
+    Adns adns;
+    if(!adns.init())
+	return 1;
+
+    AdnsQuery one_query;
+    if(!adns.submit(domain, &one_query))
 	return 1;
 
     while(1){
-	adns_answer *ans;
-	struct timeval now;
-	gettimeofday(&now,0);
-	r = adns_wait(ads, &one_query, &ans, NULL);
-	if (r) failure_errno("wait/check",r);
-	if(!__adns_handle_answer(ads, ans, domain, now))
+	AdnsQuery * finished_query = NULL;
+	if(!adns.poll(&finished_query))
 	    break;
     }
 
-
-
+    return 0;
 }
