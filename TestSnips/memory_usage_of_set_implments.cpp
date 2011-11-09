@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <set>
+#include <google/sparse_hash_set>
+#include <tr1/unordered_set>
 
 enum ImplmentType
 {
@@ -21,7 +23,7 @@ int test(ImplmentType type, size_t item_num)
 {
     using namespace std;
 
-    set<int> int_set;
+    std::tr1::unordered_set<int> int_set;
     for(size_t i ; i < item_num; ++i){
 	int_set.insert(i);
     }

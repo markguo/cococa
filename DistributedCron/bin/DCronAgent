@@ -179,14 +179,13 @@ class TaskManager:
     def run(self):
 	while True:
 	    self._clean_exited_task()
-	    self._load_tasks()
+            self._load_tasks()
 
-	    st_now = time.localtime(time.time())
+            st_now = time.localtime(time.time())
 	    run_task_list = [ task for task in self._task_list if
-		    task.should_run(st_now)]
-
-	    self._run_jobs(run_task_list)
-	    time.sleep(60)
+                              task.should_run(st_now)]
+            self._run_jobs(run_task_list)
+            time.sleep(60)
 
 def main():
     parser = optparse.OptionParser()
