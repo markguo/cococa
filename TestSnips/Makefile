@@ -15,6 +15,7 @@ BUILD = test_epoll test_statfs test_fopen perror test_vtable_layout test_malloc 
        endian \
        test_memleak \
        memory_usage_of_set_implments \
+       zmq \
        $(NEED_PTHREAD_APP)
 
 all:$(BUILD)
@@ -32,5 +33,8 @@ test_boost_shared_ptr: test_boost_shared_ptr.cpp
 
 test_ace: test_ace.cpp
 	$(CXX) -o $@ $< -lACE -D_FILE_OFFSET_BITS=64
+
+zmq: zmq.c
+	$(CC) -o $@ $< -lczmq -lzmq
 clean:
 	rm -f $(BUILD)
