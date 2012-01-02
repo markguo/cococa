@@ -1,0 +1,48 @@
+url:  http://blog.csdn.net/im3094/article/details/5337186
+title: Android系统刷机有关的几个术语
+postdate: 2010-03-01 23:05
+
+<p>&#36164;&#26009;&#27719;&#24635;&#65306;</p>&#13;
+<p><strong>XDA</strong></p>&#13;
+<p><a href="http://wiki.xda-developers.com/index.php?pagename=HTC_Hero">xdawiki</a>&#19978;hero&#36164;&#28304;&#27719;&#24635;&#65292;&#21253;&#25324;&#33719;&#21462;root&#26435;&#38480;&#65292;&#21047;&#26426;&#65292;&#30456;&#20851;rom&#19979;&#36733;&#31561;&#12290;</p>&#13;
+<p>&#160;</p>&#13;
+<p>&#160;</p>&#13;
+<hr /><p>&#160;</p>&#13;
+<p>&#21551;&#21160;&#27169;&#24335;&#65306;</p>&#13;
+<p>fastboot&#27169;&#24335;</p>&#13;
+<p>recovery&#27169;&#24335;</p>&#13;
+<p>&#160;</p>&#13;
+<p>SPL</p>&#13;
+<p>Hboot</p>&#13;
+<p>&#160;</p>&#13;
+<p>RUU</p>&#13;
+<p>radio</p>&#13;
+<p>&#160;</p>&#13;
+<p>&#160;</p>&#13;
+<hr /><p>&#160;</p>&#13;
+<p>&#160;</p>&#13;
+<p>OS&#30028;&#38754;&#65306;</p>&#13;
+<p>stock</p>&#13;
+<p>htc sence</p>&#13;
+<p>ophone oms</p>&#13;
+<p>&#160;</p>&#13;
+<p>&#160;</p>&#13;
+<p>&#160;</p>&#13;
+<hr /><p>img&#31181;&#31867;</p>&#13;
+<p>&#160;</p>&#13;
+<p><strong>which is the difference from Shipped rom and extended rom?</strong><br /><br />We call "Shipped roms" to full rom upgrades provided by operators or phone manufacturers, these upgrades contain the Operator logo, Radio ROM, Extended ROM, OS, etc..<br /><br />Extended ROM is just a small partition on the device's filesystem, where the operator puts customization (programs as cab files, settings, skins, etc...). You can see how these customizations are installed in your device after a hard reset.</p>&#13;
+<p>&#160;</p>&#13;
+<p>&#160;</p>&#13;
+<p>&#160;</p>&#13;
+<hr /><p>&#160;</p>&#13;
+<p><strong>goldcard:</strong></p>&#13;
+<p>&#20160;&#20040;&#26159;goldcard: &#21442;&#35265;<a href="http://wiki.xda-developers.com/index.php?pagename=Elf_GoldCard">xdawiki&#30340;&#35828;&#26126;</a></p>&#13;
+<p>&#160;</p>&#13;
+<p>Copy From<a href="http://forum.xda-developers.com/showthread.php?t=572683"> xda-developers</a></p>&#13;
+<p>&#160;</p>&#13;
+<div class="smallfont"><strong>[HOWTO] Create a GoldCard - Bypassing the RUU/SPL CID check to Root/Downgrade</strong></div>&#13;
+<hr size="1" /><div id="post_message_4749742">If you are stuck on a ROM you don't like (t-mobile/asian carrier etc.) you can use this howto to create a goldcard to bypass the CID checks so you can downgrade and root your Hero.<br /><br /><br />01. Download QMAT 5.06&#160;<a href="http://revskills.de/downloads/qmat_506.zip" target="_blank">here</a>.&#160;It&#8217;s a demo version so will only run for 10 minutes.<br />02. Format your SD card to FAT32. Please keep in mind some brands of SD cards do not work.<br />03. Use adb to run this command: adb shell cat /sys/class/mmc_host/mmc1/mmc1:*/cid<br />04. Copy the SD card cid code displayed after the adb command.<br />05. Start Qmat and Click on Cyptoanalysis Tools &gt; Crypto Toolbox.<br />06. Look at the bottom, there is a text box (beside the &#8220;Reverse String&#8221; button) enter the SD card cid code you got earlier.<br />Click on the &#8220;Reverse String&#8221; button, the result is reversed&#8230;<br />Example: 532600bd227d9c0347329407514d5402<br />07. Copy the reversed SD card cid code.<br />08. Go to QMAT goldcard site&#160;<a href="http://revskills.de/pages/goldcard.html" target="_blank">here</a>&#160;to generate your goldcard (yes it says for G1 but works for our Hero too).<br />09. Enter your email. For the correct SD card cid code, you need to replace the first 2 characters to 00.<br />Example: From &#8220;532600bd227d9c0347329407514d5402&#8221; to &#8220;002600bd227d9c0347329407514d5402&#8221;<br />10. Click Continue and you will receive the goldcard.img in .zip format in your email.<br />11. Go to your email, download the zip file and save it to a directory and unzip it to goldcard.img<br />12. Download HxD Hex Editor from&#160;<a href="http://download.cnet.com/HxD-Hex-Editor/3000-2352_4-10891068.html?tag=mncol" target="_blank">here</a><br />13. Install and launch HxD Hex Editor program. (make sure you use "Run as Administrator" under Vista and win 7)<br />14. Go to Extra tab &gt; Open Disk. Under Physical disk, select Removable Disk (Must be your SD card), uncheck &#8220;Open as Readonly), click OK.<br />15. Go to Extra again, Open Disk Image, open up goldcard.img which you&#8217;ve saved/unzipped earlier.<br />Now, you should have two tabs, one is your removable disk, the other is goldcard.img. Press OK when prompted for &#8220;Sector Size&#8221; 512 (Hard&#13;
+&#13;
+disks/Floppy disks), click OK.<br />16. Click on goldcard.img tab. Go to Edit tab &gt; Select All, edit tab again &gt; copy.<br />17. Click on the &#8220;removable disk&#8221; tab. Select offset 00000000 till offset 00000170 (including the 00000170 line), click on Edit tab and then Paste Write.<br />18. Click on File &gt; Save. now you can exit the program.<br />19. Reboot your phone with this SD Card (now GoldCard) inside<br />20. Use the Official HTC RUU to downgrade to 2.73.405.5 (which you can get&#160;<a href="ftp://xda:xda@ftp.xda-developers.com/Hero/Official-ROMs/RUU_Hero_HTC_WWE_2.73.405.5_WWE_release_signed_NoDriver.exe" target="_blank">here</a>) from which you can fastboot boot and/or root your phone with&#160;<a href="http://forum.xda-developers.com/showthread.php?t=559613" target="_blank">flashrec</a>.<br /><br />Done.<br /><br /><br />Credits:<br />Original heads up by tangzq with link to&#160;<a href="http://www.innovative-space.com.cn/" target="_blank">this</a><br />That site used the XDA Sapphire goldcard howto&#160;<a href="http://forum.xda-developers.com/showpost.php?p=4289899&amp;postcount=1" target="_blank">here</a><br /><br />And apparently myself and XDA as this builds on the HTC knowledge from the old days (<a href="http://forum.xda-developers.com/showthread.php?t=285346" target="_blank">here</a>)<br /><br /><br />In any case, enjoy your new found freedom&#160;<img class="inlineimg" title="Smile" src="http://forum.xda-developers.com/images/smilies/smile.gif" border="0" alt="" /></div>&#13;
+<p>&#160;</p>&#13;
+

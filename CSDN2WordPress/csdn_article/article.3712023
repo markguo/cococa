@@ -1,0 +1,31 @@
+url:  http://blog.csdn.net/im3094/article/details/3712023
+title: Apache 与SELinux
+postdate: 2009-01-05 11:52
+
+<p>&#37197;&#32622;Apache&#32463;&#24120;&#36935;&#21040;&#30340;&#19968;&#20010;&#38382;&#39064;&#23601;&#26159;&#65292;Permission Denied&#65292;&#22855;&#24618;&#20043;&#22788;&#22312;&#20110;&#65292;&#25105;&#24050;&#32463;&#25226;owner:group&#37117;&#35774;&#32622;&#25104;apache&#65292;&#24182;&#19988;&#21508;&#32423;&#30446;&#24405;&#30340;&#35775;&#38382;&#26435;&#38480;&#20063;&#37117;&#27491;&#30830;&#35774;&#32622;&#65292;&#20173;&#28982;&#36824;&#26159;&#22312;&#36827;&#34892;&#25991;&#20214;&#25805;&#20316;&#30340;&#26102;&#20505;Permission Denied.</p>&#13;
+<p>&#38382;&#39064;&#30340;&#30495;&#27491;&#21407;&#22240;&#19968;&#33324;&#20986;&#22312;SELinux&#19978;&#12290;<span class="post">SELinux&#26159;&#12300;Security-Enhanced&#13;
+Linux&#12301;&#30340;&#31616;&#31216;&#65292;&#26159;&#32654;&#22269;&#22269;&#23478;&#23433;&#20840;&#23616;&#12300;NSA&#65309;The National Security Agency&#12301; &#21644;SCC&#65288;Secure&#13;
+Computing Corporation&#65289;&#24320;&#21457;&#30340; Linux&#30340;&#19968;&#20010;&#25193;&#24352;&#24378;&#21046;&#35775;&#38382;&#25511;&#21046;&#23433;&#20840;&#27169;&#22359;&#12290;</span> </p>&#13;
+<p>&#25105;&#23545;&#23427;&#20102;&#35299;&#19981;&#22810;&#65292;&#31616;&#21333;&#30340;&#30475;&#23601;&#26159;&#22312;&#20256;&#32479;UNIX&#35775;&#38382;&#35774;&#32622;&#19978;&#21448;&#38468;&#21152;&#30340;&#19968;&#20123;&#35775;&#38382;&#25511;&#21046;&#23646;&#24615;&#12290;&#29992;ls -aZ&#21629;&#20196;&#30475;&#19979;&#27604;&#36739;&#28165;&#26970;&#65306;&#160; </p>&#13;
+<p>&#160;</p>&#13;
+<div class="highlighter"><ol class="highlighter-delphi"><li><span>[root@localhost&#160;subversion]#&#160;ls&#160;-aZ&#160;*</span></li>&#13;
+<li class="alt"><span>drwxr-xr-x&#160;&#160;apache&#160;apache&#160;root:object_r:httpd_sys_content_t&#160;.</span></li>&#13;
+<li><span>drwxr-xr-x&#160;&#160;apache&#160;apache&#160;root:object_r:usr_t&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;..</span></li>&#13;
+<li class="alt"><span>drwxr-xr-x&#160;&#160;apache&#160;apache&#160;root:object_r:httpd_sys_content_t&#160;conf</span></li>&#13;
+<li><span>drwxr-xr-x&#160;&#160;apache&#160;apache&#160;root:object_r:httpd_sys_content_t&#160;dav</span></li>&#13;
+<li class="alt"><span>drwxr-xr-x&#160;&#160;apache&#160;apache&#160;root:object_r:httpd_sys_content_t&#160;db</span></li>&#13;
+<li><span>-rw-r--r--&#160;&#160;apache&#160;apache&#160;root:object_r:httpd_sys_content_t&#160;format</span></li>&#13;
+<li class="alt"><span>drwxr-xr-x&#160;&#160;apache&#160;apache&#160;root:object_r:httpd_sys_content_t&#160;hooks</span></li>&#13;
+<li><span>drwxr-xr-x&#160;&#160;apache&#160;apache&#160;root:object_r:httpd_sys_content_t&#160;locks</span></li>&#13;
+<li class="alt"><span>-rw-r--r--&#160;&#160;apache&#160;apache&#160;root:object_r:httpd_sys_content_t&#160;README</span><span class="number">.</span><span>txt</span></li>&#13;
+<li></li>&#13;
+</ol></div>&#13;
+<p>&#22823;&#23478;&#27880;&#24847;root:object_r:httpd_sys_content_t &#36825;&#19968;&#21015;&#65292;&#23601;&#26159;&#31532;&#19977;&#20010;&#23646;&#24615;&#30340;&#20540;&#24433;&#21709;&#20102;Apache&#19982;&#23427;&#30340;&#20851;&#31995;&#12290;&#26681;&#25454;&#25105;&#26426;&#22120;&#65288;CentOS)&#19978; SELinux&#30340;&#35774;&#32622;&#65292;&#38656;&#35201;&#25226;&#31532;&#19977;&#21015;&#35774;&#32622;&#25104;httpd_sys_content_t&#65292;apache&#25165;&#33021;&#27491;&#24120;&#35775;&#38382;&#36825;&#20010;&#30446;&#24405;&#37324;&#30340;&#20869;&#23481;&#12290;&#26356;&#25913;&#36825;&#20010;&#23646;&#24615;&#30340;&#20540;&#29992;chcon&#21629;&#20196;&#65292;&#65288;&#31867;&#20284;chown)&#65292;&#27604;&#22914;&#65306;</p>&#13;
+<blockquote><strong class="command">chcon -R -h -t httpd_sys_content_t&#160; </strong><br /><span class="command">&#20854;&#20013;&#65306; -R</span> &#36882;&#24402;&#24212;&#29992;&#65307;-h &#19981;&#35201;&#36319;&#38543;&#31526;&#21495;&#38142;&#25509;&#65307; -t &#23646;&#24615;&#20540;<br />&#22914;&#27492;&#35774;&#32622;&#21518;&#65292;&#23601;&#33021;&#22815;&#35299;&#20915;Permission Denied&#30340;&#38382;&#39064;&#20102;&#12290;</blockquote>&#13;
+<div>&#13;
+<p>&#20851;&#38381;SELinux&#65306;</p>&#13;
+<p>&#20462;&#25913;&#26723;&#26696;<a class="new" title="Filesystem:/etc/sysconfig/selinux" href="http://wiki.debian.org.hk/wiki/index.php?title=Filesystem:/etc/sysconfig/selinux&amp;action=edit"><span style="color: #0000ff;">/etc/sysconfig/selinux</span></a>: </p>&#13;
+<pre style="padding-left: 30px;"># This file controls the state of SELinux on the system.<br /># SELINUX= can take one of these three values:<br />#       enforcing - SELinux security policy is enforced.<br />#       permissive - SELinux prints warnings instead of enforcing.<br />#       disabled - SELinux is fully disabled.<br />SELINUX=<strong><span style="color: #ff0000;">enforcing</span></strong><br /><br /># SELINUXTYPE= type of policy in use. Possible values are:<br />#       targeted - Only targeted network daemons are protected.<br />#       strict - Full SELinux protection.<br />SELINUXTYPE=<em>targeted</em><br />&#25226; SELINUX&#35774;&#23450;&#20026;disable, &#19979;&#27425;&#21551;&#21160;&#31995;&#32479;&#21518;&#23558;&#20250;&#20572;&#27490;SElinux&#12290; </pre>&#13;
+<p>&#20851;&#20110;&#35814;&#32454;&#30340;Apache &#19982;SELinux&#30340;&#35774;&#32622;&#21644;&#20171;&#32461;&#65292;&#35831;&#30475;&#23448;&#26041;&#35828;&#26126;&#65306;<a href="http://docs.fedoraproject.org/selinux-apache-fc3/index.html">Understanding and Customizing the Apache HTTP SELinux Policy</a></p>&#13;
+</div>&#13;
+

@@ -1,0 +1,5 @@
+url:  http://blog.csdn.net/im3094/article/details/3770924
+title: python+twistd+nevow安装NOTE
+postdate: 2009-01-13 20:45
+
+<br />nevow deps:<br />&#160;&#160;&#160; twist deps:<br />&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; ZopeInterface(NOTE: &#19981;&#26159;Zope)<br /><br />python-openid:<br /><br />&#19979;&#36733;&#22320;&#22336;&#65306;<br /><a href="http://divmod.org/trac/attachment/wiki/SoftwareReleases/Nevow-0.9.32.tar.gz?format=raw">Nevow-0.9.32.tar.gz</a>:<br /><a href="http://tmrc.mit.edu/mirror/twisted/Twisted/8.2/Twisted-8.2.0.tar.bz2">Twisted-8.2.0.tar.bz2</a><br /><a href="http://pypi.python.org/packages/source/z/zope.interface/zope.interface-3.5.0.zip">zope.interface-3.5.0.zip</a><br /><a href="http://openidenabled.com/files/python-openid/packages/python-openid-2.2.1.tar.bz2%20">python-openid-2.2.1.tar.bz2</a><br />&#160;&#160;&#160;&#160;<br />

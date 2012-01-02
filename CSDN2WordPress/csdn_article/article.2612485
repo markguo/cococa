@@ -1,0 +1,6 @@
+url:  http://blog.csdn.net/im3094/article/details/2612485
+title: linux epoll的几篇文章链接
+postdate: 2008-07-04 17:59
+
+<a href="http://blog.chinaunix.net/u/10449/showart.php?id=323252">&#22312;Linux&#19978;&#24320;&#21457;&#32593;&#32476;&#26381;&#21153;&#22120;&#30340;&#19968;&#20123;&#30456;&#20851;&#32454;&#33410;</a><br /><a href="http://lkml.org/lkml/2007/10/27/25">epoll design problems with common fork/exec patterns</a>&#13;
+

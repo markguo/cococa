@@ -1,0 +1,29 @@
+url:  http://blog.csdn.net/im3094/article/details/4860607
+title: Fedora 12 安装nvidia显卡驱动
+postdate: 2009-11-24 08:21
+
+<p>&#160;&#19978;http://rpmfusion.org/</p>&#13;
+<p>&#160;</p>&#13;
+<p>&#32534;&#36753; /etc/modprobe.d/blacklist.conf &#25991;&#20214;&#65292;&#20197;&#38459;&#27490; nouveau &#27169;&#22359;&#30340;&#21152;&#36733;&#12290;&#13;
+</p>&#13;
+<p><code>su -c 'vi /etc/modprobe.d/blacklist.conf'</code>&#13;
+</p>&#13;
+<p>&#22312;&#25991;&#20214;&#26411;&#23614;&#28155;&#21152;</p>&#13;
+<p><code>blacklist nouveau</code>&#13;
+</p>&#13;
+<p>&#20445;&#23384;&#36864;&#20986;&#12290;</p>&#13;
+<p><strong>5.</strong>&#13;
+&#32534;&#36753; /etc/grub.conf &#25991;&#20214;&#65292;&#31105;&#27490; nouveau KMS &#30340;&#20351;&#29992;&#12290;</p>&#13;
+<p><code>su -c 'vi /etc/grub.conf'</code>&#13;
+</p>&#13;
+<p>&#23558;</p>&#13;
+<p><code>kernel /vmlinuz-2.6.31.1-56.fc12.i686.PAE ro&#13;
+root=UUID=0a86cf1f-ea02-4016-9c15-c9c537489eaf LANG=zh_CN.UTF-8&#13;
+KEYBOARDTYPE=pc KEYTABLE=us rhgb quiet</code>&#13;
+</p>&#13;
+<p>&#20462;&#25913;&#25104;</p>&#13;
+<p><code>kernel /vmlinuz-2.6.31.1-56.fc12.i686.PAE ro&#13;
+root=UUID=0a86cf1f-ea02-4016-9c15-c9c537489eaf LANG=zh_CN.UTF-8&#13;
+KEYBOARDTYPE=pc KEYTABLE=us rhgb quiet nouveau.modeset=0</code>&#13;
+</p>&#13;
+

@@ -1,0 +1,35 @@
+url:  http://blog.csdn.net/im3094/article/details/4211797
+title: ubuntu Flash 中文乱码解决
+postdate: 2009-05-24 01:14
+
+<p>Ubuntu 9.04&#23433;&#35013;&#20197;&#21518;&#65292; Firefox&#20013;&#30340;Flash&#20869;&#23481;&#25773;&#25918;&#26102;&#20013;&#25991;&#26159;&#20081;&#30721;&#65292;&#21487;&#20197;&#36890;&#36807;&#20462;&#25913;/etc/fonts/conf.d/49-sansserif.conf&#25991;&#20214;&#20462;&#27491;&#12290;&#20462;&#25913;&#26041;&#27861;&#26159;&#23558;&#25991;&#20214;&#20013;&#31532;1&#65292;2&#65292;4&#20010;test&#32467;&#28857;&#30340;&lt;string&gt;&#23376;&#32467;&#28857;&#20540;&#37117;&#25913;&#20026;<span style="color: #800000;"><strong>serif</strong>&#13;
+<span style="color: #000000;">&#65292;&#22914;&#19979;&#65306;</span>&#13;
+</span>&#13;
+</p>&#13;
+<p><textarea cols="50" rows="15" name="code" class="xhtml:nocontrols">&lt;?xml version="1.0"?&gt;&#13;
+&lt;!DOCTYPE fontconfig SYSTEM "fonts.dtd"&gt;&#13;
+&lt;fontconfig&gt;&#13;
+&lt;!--&#13;
+  If the font still has no generic name, add sans-serif&#13;
+ --&gt;&#13;
+	&lt;match target="pattern"&gt;&#13;
+		&lt;test qual="all" name="family" compare="not_eq"&gt;&#13;
+			&lt;string&gt;serif&lt;/string&gt;&#13;
+		&lt;/test&gt;&#13;
+		&lt;test qual="all" name="family" compare="not_eq"&gt;&#13;
+			&lt;string&gt;serif&lt;/string&gt;&#13;
+		&lt;/test&gt;&#13;
+		&lt;test qual="all" name="family" compare="not_eq"&gt;&#13;
+			&lt;string&gt;monospace&lt;/string&gt;&#13;
+		&lt;/test&gt;&#13;
+		&lt;edit name="family" mode="append_last"&gt;&#13;
+			&lt;string&gt;serif&lt;/string&gt;&#13;
+		&lt;/edit&gt;&#13;
+	&lt;/match&gt;&#13;
+&lt;/fontconfig&gt;&#13;
+</textarea></p>&#13;
+<p><br /><span style="color: #800000;"><strong></strong>&#13;
+</span>&#13;
+</p>&#13;
+<p>&#160;</p>&#13;
+

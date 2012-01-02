@@ -1,0 +1,34 @@
+url:  http://blog.csdn.net/im3094/article/details/4925147
+title: 记一些不熟悉的知识
+postdate: 2009-12-02 16:14
+
+<ul><li>What is linux-gate.so.1?: <a href="http://www.trilithium.com/johan/2005/08/linux-gate/" target="_blank">http://www.trilithium.com/johan/2005/08/linux-gate/</a>&#13;
+</li>&#13;
+<li>glibc malloc&#31639;&#27861;&#65306;<a href="http://gee.cs.oswego.edu/dl/html/malloc.html" target="_blank">http://gee.cs.oswego.edu/dl/html/malloc.html</a>&#13;
+</li>&#13;
+<li>gnu stdc++ &#26631;&#20934;allocator: <a href="http://www.cs.huji.ac.il/~etsman/Docs/gcc-3.4-base/libstdc++/html/20_util/allocator.html" target="_blank">http://www.cs.huji.ac.il/~etsman/Docs/gcc-3.4-base/libstdc++/html/20_util/allocator.html</a>&#13;
+</li>&#13;
+<li>gcc &#23545;&#25972;&#24418;&#25968;&#36827;&#34892;&#21407;&#23376;&#25805;&#20316;&#30340;&#20869;&#32622;&#20989;&#25968;&#65306;<a href="http://gcc.gnu.org/onlinedocs/gcc-4.1.2/gcc/Atomic-Builtins.html">http://gcc.gnu.org/onlinedocs/gcc-4.1.2/gcc/Atomic-Builtins.html</a>&#160;&#160;</li>&#13;
+</ul><p><strong>&#26597;&#30475;glibc&#29256;&#26412;&#65306;</strong>&#13;
+&#36816;&#34892;<em>/lib/libc.so.6</em>&#13;
+(64&#20301;&#31995;&#32479;&#19979;&#26159;<em>/lib/lib64.so.6</em>&#13;
+), &#25105;&#26426;&#22120;&#19978;&#21040;&#36755;&#20986;&#65306;</p>&#13;
+<p><textarea cols="50" rows="15" name="code" class="cpp:nogutter">$ /lib64/libc.so.6 &#13;
+GNU C Library stable release version 2.11, by Roland McGrath et al.&#13;
+Copyright (C) 2009 Free Software Foundation, Inc.&#13;
+This is free software; see the source for copying conditions.&#13;
+There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A&#13;
+PARTICULAR PURPOSE.&#13;
+Compiled by GNU CC version 4.4.2 20091027 (Red Hat 4.4.2-7).&#13;
+Compiled on a Linux &gt;&gt;2.6.18-164.2.1.el5&lt;&lt; system on 2009-11-05.&#13;
+Available extensions:&#13;
+	The C stubs add-on version 2.1.2.&#13;
+	crypt add-on version 2.1 by Michael Glad and others&#13;
+	GNU Libidn by Simon Josefsson&#13;
+	Native POSIX Threads Library by Ulrich Drepper et al&#13;
+	BIND-8.2.3-T5B&#13;
+	RT using linux kernel aio&#13;
+For bug reporting instructions, please see:&#13;
+&lt;http://www.gnu.org/software/libc/bugs.html&gt;.&#13;
+</textarea></p>&#13;
+
